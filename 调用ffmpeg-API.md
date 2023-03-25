@@ -238,14 +238,14 @@ int main(int argc, char *argv[]){
 然后编译程序：
 
 ```bash
-$ g++ demo.cpp -I static/include -L static/lib -lavfilter -lavformat -lavcodec -lavutil -lswscale -lz -lx264 -g
+$ g++ demo.cpp -I static/include -L static/lib -lavfilter -lavformat -lavcodec -lavutil -lswscale -lz -lx264 -static -g
 ```
 
 > -z 是额外的系统静态库，因为ffmpeg在某些函数(libavformat/mov.c中引用了uncompress函数)中依赖的libz.a库
 >
 > 这里需要引用你编译的所有子模块静态库，ffmpeg中的子模块依赖性很强，且最好是按照上面的顺序来链接，不然也会出错！
 
-这样编译出来的`a.out`就是一个静态链接文件，在调试代码时候可以进入到ffmpeg-API中进行调试。
+这样编译出来的`a.out`就是一个静态链接、使用静态库的可执行文件文件，在调试代码时候可以进入到ffmpeg-API中进行调试。（不一定非要静态链接，只要是静态库就可以，默认configure就是静态库+动态链接也是可以直接调试源码的）
 
 
 
@@ -269,6 +269,27 @@ $ g++ demo.cpp -I shread/include/ -L shread/lib/ -lavformat
 
 ```bash
 $ export LD_LIBRARY_PATH="./build/lib"
+```
+
+
+
+**使用MakeFile**
+
+这里不需要使用静态链接，因为会编译很慢，只要库文件是静态库就没问题
+
+```makefile
+CC:=g++
+BIN:=a.out
+CPPFLAGS:=-g -Wall -std=c++11 -I static/include
+LIBS=-L static/lib/ -lavfilter -lavformat -lavcodec -lavutil -lswscale -lz -lx264
+SRC:=$(wildcard *.cpp)
+OBJS:=$(patsubst %.cpp,%.o,$(SRC))
+
+$(BIN):$(OBJS)
+	$(CC) $^ -o $@ $(LIBS)
+
+clean:
+	rm $(BIN) *.o output.* divide.* *.yuv *.h264
 ```
 
 
